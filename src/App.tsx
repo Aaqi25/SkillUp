@@ -11,6 +11,7 @@ import { RegisterPage } from './components/auth/RegisterPage.js';
 import { LoginPage } from './components/auth/LoginPage.js';
 import { OnboardingPage } from './components/profile/OnboardingPage.js';
 import { StudentProfilePage } from './components/profile/StudentProfilePage.js';
+import { AssessmentFlow } from './components/assessment/AssessmentFlow.js';
 import {
   GraduationCap,
   LogOut,
@@ -19,9 +20,10 @@ import {
   ChevronDown,
   Sparkles,
   Loader2,
+  FileCheck2,
 } from 'lucide-react';
 
-type ScreenState = 'landing' | 'register' | 'login' | 'onboarding' | 'profile';
+type ScreenState = 'landing' | 'register' | 'login' | 'onboarding' | 'profile' | 'assessment';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenState>('landing');
@@ -152,11 +154,29 @@ export default function App() {
           {/* Right Navigation / Session Controls */}
           <div className="flex items-center gap-3">
             {currentUser ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                {/* Take / View Assessment Button */}
+                <button
+                  id="btn-nav-assessment"
+                  onClick={() => setCurrentScreen('assessment')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    currentScreen === 'assessment'
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                      : 'text-slate-600 hover:text-blue-700 hover:bg-blue-50/50'
+                  }`}
+                >
+                  <FileCheck2 size={14} />
+                  <span>Assessment</span>
+                </button>
+
                 {/* Active Student Pill */}
                 <button
                   onClick={() => setCurrentScreen('profile')}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-800 transition-colors"
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors ${
+                    currentScreen === 'profile'
+                      ? 'bg-slate-100 border-slate-300 text-slate-900'
+                      : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800'
+                  }`}
                 >
                   <div className="w-6 h-6 rounded-full bg-blue-600 text-white text-[11px] flex items-center justify-center font-bold">
                     {currentUser.fullName ? currentUser.fullName[0] : 'S'}
@@ -238,6 +258,20 @@ export default function App() {
           <StudentProfilePage
             user={currentUser}
             onUpdateUser={updated => setCurrentUser(updated)}
+            onStartAssessment={() => setCurrentScreen('assessment')}
+          />
+        )}
+
+        {currentScreen === 'assessment' && currentUser && (
+          <AssessmentFlow
+            user={currentUser}
+            onReturnToProfile={() => setCurrentScreen('profile')}
+            onAssessmentCompleted={() => {
+              // Refresh user profile after assessment completion
+              api.getCurrentUser().then(refreshed => {
+                setCurrentUser(refreshed);
+              }).catch(() => {});
+            }}
           />
         )}
       </main>
@@ -245,9 +279,9 @@ export default function App() {
       {/* Platform Footer */}
       <footer className="bg-white border-t border-slate-200 py-4 px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>SkillUp AI • Module 1: Authentication & Student Profile</span>
+          <span>SkillUp AI • Module 1 & 2: Auth, Profile & Diagnostic Assessment</span>
           <span className="text-slate-400">
-            Powered by Modular Monolith Backend & PostgreSQL Source of Truth
+            Deterministic Engine • In-Memory PostgreSQL Store • Verified Question Bank
           </span>
         </div>
       </footer>

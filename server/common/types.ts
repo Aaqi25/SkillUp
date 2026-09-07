@@ -64,6 +64,32 @@ export interface AssessmentSubmissionAnswer {
   timeSpentSeconds?: number;
 }
 
+export interface QuestionGradingDetail {
+  questionId: string;
+  skillId: string;
+  skillName: string;
+  difficulty: QuestionDifficulty;
+  questionText: string;
+  options: string[];
+  selectedOptionIndex: number;
+  correctOptionIndex: number;
+  isCorrect: boolean;
+  explanation: string;
+  weight: number;
+}
+
+export interface AssessmentAttempt {
+  id: string;
+  userId: string;
+  status: 'in_progress' | 'completed' | 'abandoned';
+  isReassessment: boolean;
+  targetSkillIds: string[];
+  questionIds: string[];
+  startedAt: string;
+  completedAt?: string;
+  resultId?: string;
+}
+
 export interface AssessmentResult {
   assessmentId: string;
   userId: string;
@@ -79,6 +105,7 @@ export interface AssessmentResult {
     percentage: number;
     weightedScore: number;
   }>;
+  details?: QuestionGradingDetail[];
   completedAt: string;
 }
 

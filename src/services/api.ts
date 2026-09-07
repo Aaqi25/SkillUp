@@ -13,6 +13,8 @@ import {
   SkillGapAnalysis,
   RoadmapData,
   ProgressStatus,
+  ClientAssessmentStartResponse,
+  ClientAssessmentResult,
 } from '../types/index.js';
 
 interface ApiResponse<T> {
@@ -142,6 +144,29 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(updates),
     }),
+
+  // Module 2: Assessment Engine
+  startAssessment: (skills?: string[], isReassessment?: boolean): Promise<ClientAssessmentStartResponse> =>
+    fetchJson<ClientAssessmentStartResponse>('/api/assessment/start', {
+      method: 'POST',
+      body: JSON.stringify({ skills, isReassessment }),
+    }),
+
+  submitAssessment: (payload: {
+    assessmentId: string;
+    isReassessment?: boolean;
+    answers: Array<{ questionId: string; selectedOptionIndex: number; timeSpentSeconds?: number }>;
+  }): Promise<ClientAssessmentResult> =>
+    fetchJson<ClientAssessmentResult>('/api/assessment/submit', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getAssessmentHistory: (): Promise<ClientAssessmentResult[]> =>
+    fetchJson<ClientAssessmentResult[]>('/api/assessment/history'),
+
+  getAssessmentResult: (id: string): Promise<ClientAssessmentResult> =>
+    fetchJson<ClientAssessmentResult>(`/api/assessment/results/${id}`),
 
   // Preserved for subsequent modules
   getSkills: () => fetchJson<SkillItem[]>('/api/skills'),

@@ -4,6 +4,7 @@ import {
   Skill,
   CareerRole,
   AssessmentQuestion,
+  AssessmentAttempt,
   User,
   UserSkillScore,
   AssessmentResult,
@@ -16,6 +17,7 @@ export interface DatabaseState {
   skills: Map<string, Skill>;
   careers: Map<string, CareerRole>;
   questions: Map<string, AssessmentQuestion>;
+  attempts: Map<string, AssessmentAttempt>;
   userSkills: Map<string, Map<string, UserSkillScore>>;
   userCareerGoals: Map<string, string>;
   userRoadmaps: Map<string, PersonalizedRoadmap>;
@@ -31,6 +33,7 @@ class DatabaseClient {
     skills: new Map(),
     careers: new Map(),
     questions: new Map(),
+    attempts: new Map(),
     userSkills: new Map(),
     userCareerGoals: new Map(),
     userRoadmaps: new Map(),
@@ -176,12 +179,41 @@ class DatabaseClient {
     return Array.from(this.state.questions.values());
   }
 
+  getQuestion(id: string): AssessmentQuestion | undefined {
+    return this.state.questions.get(id);
+  }
+
   getQuestionsForSkills(skillIds: string[]): AssessmentQuestion[] {
     return Array.from(this.state.questions.values()).filter(q => skillIds.includes(q.skillId));
   }
 
   addQuestion(question: AssessmentQuestion): void {
     this.state.questions.set(question.id, question);
+  }
+
+  // Assessment Attempts
+  createAssessmentAttempt(attempt: AssessmentAttempt): AssessmentAttempt {
+    this.state.attempts.set(attempt.id, attempt);
+    return attempt;
+  }
+
+  getAssessmentAttempt(id: string): AssessmentAttempt | undefined {
+    return this.state.attempts.get(id);
+  }
+
+  updateAssessmentAttempt(id: string, updates: Partial<AssessmentAttempt>): AssessmentAttempt | undefined {
+    const existing = this.state.attempts.get(id);
+    if (!existing) return undefined;
+    const updated: AssessmentAttempt = {
+      ...existing,
+      ...updates,
+    };
+    this.state.attempts.set(id, updated);
+    return updated;
+  }
+
+  getUserAttempts(userId: string): AssessmentAttempt[] {
+    return Array.from(this.state.attempts.values()).filter(a => a.userId === userId);
   }
 
   getUserSkills(userId: string): UserSkillScore[] {
@@ -221,6 +253,14 @@ class DatabaseClient {
 
   getUserAssessments(userId: string): AssessmentResult[] {
     return this.state.assessmentHistory.get(userId) || [];
+  }
+
+  getAssessmentResultById(assessmentId: string): AssessmentResult | undefined {
+    for (const history of this.state.assessmentHistory.values()) {
+      const found = history.find(r => r.assessmentId === assessmentId);
+      if (found) return found;
+    }
+    return undefined;
   }
 
   setUserCareerGoal(userId: string, careerId: string): void {

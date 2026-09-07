@@ -138,3 +138,56 @@ export interface ArchitectureStatus {
     status: string;
   }>;
 }
+
+export interface ClientAssessmentQuestion {
+  id: string;
+  skillId: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  questionText: string;
+  options: string[];
+  source: 'curated' | 'ai_generated';
+  weight: number;
+}
+
+export interface ClientQuestionGradingDetail {
+  questionId: string;
+  skillId: string;
+  skillName: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  questionText: string;
+  options: string[];
+  selectedOptionIndex: number;
+  correctOptionIndex: number;
+  isCorrect: boolean;
+  explanation: string;
+  weight: number;
+}
+
+export interface ClientAssessmentStartResponse {
+  attemptId: string;
+  questions: ClientAssessmentQuestion[];
+  curatedRatio: number;
+  aiRatio: number;
+  isReassessment: boolean;
+  totalQuestions: number;
+}
+
+export interface ClientAssessmentResult {
+  assessmentId: string;
+  userId: string;
+  isReassessment: boolean;
+  totalQuestions: number;
+  curatedCount: number;
+  aiGeneratedCount: number;
+  overallScore: number;
+  skillBreakdown: Record<string, {
+    skillName: string;
+    correct: number;
+    total: number;
+    percentage: number;
+    weightedScore: number;
+  }>;
+  details?: ClientQuestionGradingDetail[];
+  completedAt: string;
+}
+

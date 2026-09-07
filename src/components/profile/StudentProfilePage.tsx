@@ -44,7 +44,7 @@ const LEARNING_PREFERENCE_OPTIONS = [
   'System Design Blueprints',
 ];
 
-export const StudentProfilePage: React.FC<ProfileProps> = ({ user, onUpdateUser }) => {
+export const StudentProfilePage: React.FC<ProfileProps> = ({ user, onUpdateUser, onStartAssessment }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -416,23 +416,34 @@ export const StudentProfilePage: React.FC<ProfileProps> = ({ user, onUpdateUser 
         )}
       </div>
 
-      {/* Next Step Teaser Banner (Ready for Module 2: Assessment) */}
+      {/* Assessment Action Banner (Module 2: Assessment) */}
       <div className="bg-gradient-to-r from-blue-900 to-indigo-900 rounded-2xl p-6 text-white shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="space-y-1 text-center sm:text-left">
           <div className="inline-flex items-center gap-1 text-[11px] font-semibold bg-white/10 text-blue-200 px-2.5 py-0.5 rounded-full">
             <Sparkles size={12} />
-            <span>Next in Progression: Module 2</span>
+            <span>Module 2: Diagnostic Assessment</span>
           </div>
-          <h4 className="text-base font-bold">Initial Diagnostic Skill Assessment</h4>
+          <h4 className="text-base font-bold">Curated Skill Assessment Available</h4>
           <p className="text-xs text-blue-100 max-w-xl leading-relaxed">
-            Once your profile is set, the next phase will evaluate your baseline skills in TypeScript, Node.js, and Databases with 100% curated, deterministic questions.
+            Evaluate your baseline engineering skills in TypeScript, Node.js, and Databases with verified curated questions and deterministic algorithmic scoring.
           </p>
         </div>
 
         <div className="shrink-0 flex items-center gap-2">
-          <span className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/10 text-white border border-white/20">
-            Profile Active
-          </span>
+          {onStartAssessment ? (
+            <button
+              id="btn-profile-start-assessment"
+              onClick={onStartAssessment}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-xs font-bold shadow-sm transition-colors"
+            >
+              <span>Take Assessment</span>
+              <ArrowRight size={14} />
+            </button>
+          ) : (
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/10 text-white border border-white/20">
+              Profile Active
+            </span>
+          )}
         </div>
       </div>
     </div>

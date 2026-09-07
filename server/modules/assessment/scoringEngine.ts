@@ -5,7 +5,8 @@
  * ARCHITECTURAL RULE 2: Assessment scoring must be handled strictly by backend logic.
  */
 
-import { AssessmentQuestion, AssessmentSubmissionAnswer, AssessmentResult } from '../../common/types.js';
+import { AssessmentQuestion, AssessmentSubmissionAnswer, AssessmentResult, QuestionGradingDetail } from '../../common/types.js';
+import { db } from '../../db/client.js';
 
 export interface ScoringEngineInput {
   assessmentId: string;
@@ -19,7 +20,7 @@ export class ScoringEngine {
   /**
    * Deterministically scores an assessment.
    * Compares each selected option index against the question's correct option index.
-   * Computes per-skill scores and weighted overall composite score.
+   * Computes per-skill scores, question grading details, and weighted overall composite score.
    */
   public static calculate(input: ScoringEngineInput): AssessmentResult {
     const { assessmentId, userId, isReassessment, questions, answers } = input;
@@ -47,15 +48,19 @@ export class ScoringEngine {
 
     let totalEarnedWeight = 0;
     let totalPossibleWeight = 0;
+    const details: QuestionGradingDetail[] = [];
 
     for (const ans of answers) {
       const question = questionMap.get(ans.questionId);
       if (!question) continue;
 
       const skillId = question.skillId;
+      const skill = db.getSkill(skillId);
+      const skillName = skill ? skill.name : skillId;
+
       if (!skillStats[skillId]) {
         skillStats[skillId] = {
-          skillName: skillId,
+          skillName,
           correct: 0,
           total: 0,
           earnedWeight: 0,
@@ -75,6 +80,20 @@ export class ScoringEngine {
         skillStats[skillId].earnedWeight += weight;
         totalEarnedWeight += weight;
       }
+
+      details.push({
+        questionId: question.id,
+        skillId: question.skillId,
+        skillName,
+        difficulty: question.difficulty,
+        questionText: question.questionText,
+        options: question.options,
+        selectedOptionIndex: ans.selectedOptionIndex,
+        correctOptionIndex: question.correctOptionIndex,
+        isCorrect,
+        explanation: question.explanation,
+        weight,
+      });
     }
 
     const skillBreakdown: AssessmentResult['skillBreakdown'] = {};
@@ -105,6 +124,7 @@ export class ScoringEngine {
       aiGeneratedCount,
       overallScore,
       skillBreakdown,
+      details,
       completedAt: new Date().toISOString(),
     };
   }

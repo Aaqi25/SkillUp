@@ -1,12 +1,72 @@
 import { Router, Response } from 'express';
 import { db } from '../../db/client.js';
 import { sendSuccess, sendError } from '../../common/utils/response.js';
-import { AuthenticatedRequest } from '../../common/middleware/auth.js';
+import { AuthenticatedRequest, authenticate } from '../../common/middleware/auth.js';
 import { QuestionSelector } from './questionSelector.js';
 import { ScoringEngine } from './scoringEngine.js';
-import { AssessmentSubmissionAnswer } from '../../common/types.js';
+import { AssessmentSubmissionAnswer, AssessmentAttempt } from '../../common/types.js';
 
 export const assessmentRouter = Router();
+
+// All assessment endpoints require authentication
+assessmentRouter.use(authenticate);
+
+// POST /api/assessment/start - Initialize an assessment attempt
+assessmentRouter.post('/start', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { skills, isReassessment } = req.body as {
+      skills?: string[];
+      isReassessment?: boolean;
+    };
+
+    const targetSkillIds = Array.isArray(skills) && skills.length > 0
+      ? skills
+      : db.getAllSkills().map(s => s.id);
+
+    // Initial assessment MVP is strictly 100% curated questions
+    const selection = await QuestionSelector.selectQuestions({
+      targetSkillIds,
+      totalQuestions: 6,
+      isReassessment: !!isReassessment,
+    });
+
+    const attemptId = `asm_att_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const attempt: AssessmentAttempt = {
+      id: attemptId,
+      userId,
+      status: 'in_progress',
+      isReassessment: !!isReassessment,
+      targetSkillIds,
+      questionIds: selection.questions.map(q => q.id),
+      startedAt: new Date().toISOString(),
+    };
+
+    db.createAssessmentAttempt(attempt);
+
+    // Sanitize questions: strip out correctOptionIndex and explanations
+    const sanitizedQuestions = selection.questions.map(q => ({
+      id: q.id,
+      skillId: q.skillId,
+      difficulty: q.difficulty,
+      questionText: q.questionText,
+      options: q.options,
+      source: q.source,
+      weight: q.weight,
+    }));
+
+    return sendSuccess(res, {
+      attemptId,
+      questions: sanitizedQuestions,
+      curatedRatio: selection.curatedRatio,
+      aiRatio: selection.aiRatio,
+      isReassessment: !!isReassessment,
+      totalQuestions: sanitizedQuestions.length,
+    }, 'assessment');
+  } catch (error) {
+    return sendError(res, 'Failed to start assessment attempt', 500, 'ASSESSMENT_START_FAILED', error, 'assessment');
+  }
+});
 
 // GET /api/assessment/questions - Hybrid question selection
 // Rule 6: Initial = 100% curated, Reassessment = ~70% curated + ~30% AI-generated
@@ -20,7 +80,7 @@ assessmentRouter.get('/questions', async (req: AuthenticatedRequest, res: Respon
 
     const selection = await QuestionSelector.selectQuestions({
       targetSkillIds,
-      totalQuestions: isReassessment ? 6 : 6,
+      totalQuestions: 6,
       isReassessment,
     });
 
@@ -51,15 +111,22 @@ assessmentRouter.get('/questions', async (req: AuthenticatedRequest, res: Respon
 // Rule 1 & 2: No AI for deterministic scoring, strict backend logic
 assessmentRouter.post('/submit', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.user?.id || 'usr_student_demo_01';
+    const userId = req.user!.id;
     const { assessmentId, isReassessment, answers } = req.body as {
       assessmentId: string;
-      isReassessment: boolean;
+      isReassessment?: boolean;
       answers: AssessmentSubmissionAnswer[];
     };
 
-    if (!answers || !Array.isArray(answers)) {
-      return sendError(res, 'Invalid answers payload', 400, 'INVALID_PAYLOAD', null, 'assessment');
+    if (!answers || !Array.isArray(answers) || answers.length === 0) {
+      return sendError(res, 'Invalid answers payload: answers array is required and must not be empty', 400, 'INVALID_PAYLOAD', null, 'assessment');
+    }
+
+    // Validate each answer structure
+    for (const ans of answers) {
+      if (!ans.questionId || typeof ans.selectedOptionIndex !== 'number' || ans.selectedOptionIndex < 0) {
+        return sendError(res, 'Each answer must include a valid questionId and selectedOptionIndex', 400, 'INVALID_ANSWER_FORMAT', null, 'assessment');
+      }
     }
 
     // Retrieve questions from database/question bank
@@ -67,26 +134,32 @@ assessmentRouter.post('/submit', async (req: AuthenticatedRequest, res: Response
     const allQuestions = db.getAllQuestions();
     const relevantQuestions = allQuestions.filter(q => questionIds.includes(q.id));
 
-    // For any AI-generated questions generated on the fly, match them or add them
+    // Handle any dynamic or non-preseeded questions safely
     for (const ans of answers) {
       if (!relevantQuestions.some(q => q.id === ans.questionId)) {
-        relevantQuestions.push({
-          id: ans.questionId,
-          skillId: 'skl_ts_react',
-          difficulty: 'medium',
-          questionText: 'Adaptive Question',
-          options: ['A', 'B', 'C', 'D'],
-          correctOptionIndex: 0,
-          explanation: 'Standard adaptive question answer key',
-          source: 'ai_generated',
-          weight: 1.1,
-        });
+        const fallbackQ = db.getQuestion(ans.questionId);
+        if (fallbackQ) {
+          relevantQuestions.push(fallbackQ);
+        } else {
+          relevantQuestions.push({
+            id: ans.questionId,
+            skillId: 'skl_ts_react',
+            difficulty: 'medium',
+            questionText: 'Adaptive Question',
+            options: ['A', 'B', 'C', 'D'],
+            correctOptionIndex: 0,
+            explanation: 'Standard adaptive question answer key',
+            source: 'curated',
+            weight: 1.0,
+          });
+        }
       }
     }
 
     // Run deterministic scoring engine
+    const finalAssessmentId = assessmentId || `asm_${Date.now()}`;
     const result = ScoringEngine.calculate({
-      assessmentId: assessmentId || `asm_${Date.now()}`,
+      assessmentId: finalAssessmentId,
       userId,
       isReassessment: !!isReassessment,
       questions: relevantQuestions,
@@ -108,15 +181,44 @@ assessmentRouter.post('/submit', async (req: AuthenticatedRequest, res: Response
     // Record persistent assessment record in PostgreSQL store
     db.saveAssessmentResult(result);
 
+    // If there is an active assessment attempt, mark it as completed
+    if (assessmentId) {
+      const attempt = db.getAssessmentAttempt(assessmentId);
+      if (attempt) {
+        db.updateAssessmentAttempt(assessmentId, {
+          status: 'completed',
+          completedAt: result.completedAt,
+          resultId: result.assessmentId,
+        });
+      }
+    }
+
     return sendSuccess(res, result, 'assessment');
   } catch (error) {
     return sendError(res, 'Failed to score assessment', 500, 'SCORING_FAILED', error, 'assessment');
   }
 });
 
-// GET /api/assessment/history
+// GET /api/assessment/history - Retrieve student's past assessment results
 assessmentRouter.get('/history', (req: AuthenticatedRequest, res: Response) => {
-  const userId = req.user?.id || 'usr_student_demo_01';
+  const userId = req.user!.id;
   const history = db.getUserAssessments(userId);
   return sendSuccess(res, history, 'assessment');
+});
+
+// GET /api/assessment/results/:id - Retrieve specific assessment result
+assessmentRouter.get('/results/:id', (req: AuthenticatedRequest, res: Response) => {
+  const assessmentId = req.params.id;
+  const result = db.getAssessmentResultById(assessmentId);
+
+  if (!result) {
+    return sendError(res, 'Assessment result not found', 404, 'NOT_FOUND', null, 'assessment');
+  }
+
+  // Ensure student only accesses their own assessment result
+  if (result.userId !== req.user!.id && req.user!.role !== 'admin') {
+    return sendError(res, 'You are not authorized to view this assessment result', 403, 'FORBIDDEN', null, 'assessment');
+  }
+
+  return sendSuccess(res, result, 'assessment');
 });
