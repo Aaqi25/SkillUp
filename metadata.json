@@ -1,0 +1,6 @@
+{
+  "name": "SkillUp AI",
+  "description": "AI-powered student skill assessment and personalized career roadmap platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
