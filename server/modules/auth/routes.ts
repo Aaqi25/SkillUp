@@ -6,9 +6,13 @@ import {
   hashPassword,
   verifyPassword,
   createSessionToken,
+  revokeSessionToken,
   toSafeUser,
 } from './authService.js';
 import { User } from '../../common/types.js';
+
+// RFC-5322 simplified email regex: validates local@domain.tld format
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
 
 export const authRouter = Router();
 
@@ -20,7 +24,7 @@ authRouter.post('/register', (req: Request, res: Response) => {
   const { email, password, fullName, educationLevel, degreeCourse, academicYear } = req.body;
 
   // Validation
-  if (!email || typeof email !== 'string' || !email.includes('@')) {
+  if (!email || typeof email !== 'string' || !EMAIL_REGEX.test(email.trim())) {
     return sendError(res, 'A valid email address is required', 400, 'INVALID_EMAIL', null, 'auth');
   }
 
@@ -125,9 +129,16 @@ authRouter.post('/login', (req: Request, res: Response) => {
 
 /**
  * POST /api/auth/logout
- * Terminates active session.
+ * Terminates active session by revoking the token server-side.
  */
-authRouter.post('/logout', (_req: Request, res: Response) => {
+authRouter.post('/logout', (req: Request, res: Response) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (token) {
+      revokeSessionToken(token);
+    }
+  }
   return sendSuccess(res, { message: 'Logged out successfully' }, 'auth');
 });
 

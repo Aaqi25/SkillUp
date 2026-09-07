@@ -13,6 +13,21 @@ const DIGEST = 'sha512';
 const TOKEN_SECRET = process.env.AUTH_SECRET || 'skillup_secure_session_secret_key_v1';
 
 /**
+ * In-memory token revocation set for server-side logout invalidation.
+ * Entries are the full token strings that have been explicitly revoked via logout.
+ * NOTE: This is cleared on server restart (acceptable limitation for in-memory DB mode).
+ * In production with PostgreSQL, this would be persisted to a revoked_tokens table.
+ */
+const revokedTokens = new Set<string>();
+
+/**
+ * Revoke a session token (called on logout). The token will be rejected by verifySessionToken.
+ */
+export function revokeSessionToken(token: string): void {
+  revokedTokens.add(token);
+}
+
+/**
  * Hash password securely with PBKDF2 and a random 16-byte cryptographically secure salt.
  */
 export function hashPassword(password: string): string {
@@ -59,10 +74,13 @@ export function createSessionToken(user: User): string {
 }
 
 /**
- * Verify a signed session token and return the payload if valid and unexpired.
+ * Verify a signed session token and return the payload if valid, unexpired, and not revoked.
  */
 export function verifySessionToken(token: string): SessionPayload | null {
   if (!token || !token.includes('.')) return null;
+
+  // Reject explicitly revoked tokens (e.g., from logout)
+  if (revokedTokens.has(token)) return null;
 
   const [payloadB64, signature] = token.split('.');
   if (!payloadB64 || !signature) return null;

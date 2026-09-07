@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
@@ -25,8 +25,56 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = 3000;
 
+// Simple in-memory rate limiter for auth endpoints (brute-force protection)
+// Maps: IP -> { count, resetAt }
+const authRateLimitStore = new Map<string, { count: number; resetAt: number }>();
+const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const AUTH_RATE_LIMIT_MAX = 20; // max 20 auth requests per IP per window
+
+function authRateLimiter(req: Request, res: Response, next: NextFunction) {
+  const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const entry = authRateLimitStore.get(ip);
+
+  if (!entry || now > entry.resetAt) {
+    authRateLimitStore.set(ip, { count: 1, resetAt: now + AUTH_RATE_LIMIT_WINDOW_MS });
+    return next();
+  }
+
+  entry.count++;
+  if (entry.count > AUTH_RATE_LIMIT_MAX) {
+    res.status(429).json({
+      success: false,
+      error: {
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: 'Too many authentication attempts. Please try again in 15 minutes.',
+      },
+    });
+    return;
+  }
+  next();
+}
+
 async function startServer() {
   const app = express();
+
+  // CORS: Allow same-origin and localhost development origins
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const origin = req.headers.origin || '';
+    const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+    const appUrl = process.env.APP_URL || '';
+    if (isLocalhost || (appUrl && origin === appUrl)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, PUT, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(204);
+      return;
+    }
+    next();
+  });
 
   // Basic Body Parsers
   app.use(express.json());
@@ -81,7 +129,7 @@ async function startServer() {
   });
 
   // Mount Modular Monolith Domain Routers
-  app.use('/api/auth', authRouter);
+  app.use('/api/auth', authRateLimiter, authRouter);
   app.use('/api/skills', skillsRouter);
   app.use('/api/assessment', assessmentRouter);
   app.use('/api/careers', careersRouter);
