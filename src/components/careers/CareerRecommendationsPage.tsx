@@ -33,6 +33,7 @@ import {
   Briefcase,
   HelpCircle,
   X,
+  Target,
 } from 'lucide-react';
 
 interface CareerRecommendationsPageProps {
@@ -40,6 +41,7 @@ interface CareerRecommendationsPageProps {
   onNavigateToAssessment: () => void;
   onNavigateToSkills: () => void;
   onNavigateToProfile: () => void;
+  onNavigateToSkillGap?: () => void;
 }
 
 export function CareerRecommendationsPage({
@@ -47,6 +49,7 @@ export function CareerRecommendationsPage({
   onNavigateToAssessment,
   onNavigateToSkills,
   onNavigateToProfile,
+  onNavigateToSkillGap,
 }: CareerRecommendationsPageProps) {
   const [data, setData] = useState<CareerRecommendationsResponse | null>(null);
   const [catalog, setCatalog] = useState<CareerRoleItem[]>([]);
@@ -242,6 +245,16 @@ export function CareerRecommendationsPage({
                   <div className="text-[10px] text-slate-400 font-medium">Avg Salary</div>
                   <div className="text-xs font-semibold text-white">{activeSelectedCareer.averageSalary}</div>
                 </div>
+              )}
+              {onNavigateToSkillGap && (
+                <button
+                  id="btn-active-career-skill-gap"
+                  onClick={onNavigateToSkillGap}
+                  className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition-colors inline-flex items-center gap-1.5 shadow-xs shrink-0"
+                >
+                  <Target size={14} />
+                  <span>Analyze Skill Gaps</span>
+                </button>
               )}
             </div>
           </div>

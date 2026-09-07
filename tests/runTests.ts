@@ -11,6 +11,7 @@ import { runAuthAndProfileTests } from './authModule.test.js';
 import { runAssessmentModuleTests } from './assessmentModule.test.js';
 import { runSkillAnalysisModuleTests } from './skillAnalysisModule.test.js';
 import { runCareerModuleTests } from './careerModule.test.js';
+import { runSkillGapModuleTests } from './skillGapModule.test.js';
 
 async function main() {
   console.log('====================================================');
@@ -22,6 +23,7 @@ async function main() {
     await runAssessmentModuleTests();
     await runSkillAnalysisModuleTests();
     await runCareerModuleTests();
+    await runSkillGapModuleTests();
     runScoringTests();
     runMatchingTests();
     runGapTests();

@@ -58,6 +58,11 @@ export function authenticate(req: AuthenticatedRequest, res: Response, next: Nex
 }
 
 /**
+ * Alias for authenticate for standardized route ergonomics
+ */
+export const requireAuth = authenticate;
+
+/**
  * Optional authentication: populates req.user if a valid token exists, but does not reject if absent.
  */
 export function optionalAuthenticate(req: AuthenticatedRequest, _res: Response, next: NextFunction) {

@@ -173,11 +173,18 @@ export interface CareerMatchResult {
 export interface SkillGapItem {
   skillId: string;
   skillName: string;
-  currentScore: number;
-  requiredScore: number;
+  currentScore?: number;
+  requiredScore?: number;
   gap: number; // max(0, requiredScore - currentScore)
-  priority: 'critical' | 'high' | 'medium' | 'low';
-  estimatedWeeksToBridge: number;
+  priority: 'critical' | 'high' | 'medium' | 'low' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'MET';
+  estimatedWeeksToBridge?: number;
+  category?: string;
+  currentLevel?: number;
+  requiredLevel?: number;
+  careerWeight?: number;
+  isUnassessed?: boolean;
+  gapPercentage?: number;
+  status?: 'MET' | 'GAP';
 }
 
 export interface SkillGapAnalysisResult {

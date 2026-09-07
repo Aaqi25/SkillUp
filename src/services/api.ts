@@ -20,6 +20,8 @@ import {
   CareerRecommendationsResponse,
   RankedCareerRecommendation,
   SelectedCareerRecord,
+  SkillGapReport,
+  SkillGapReportSummary,
 } from '../types/index.js';
 
 interface ApiResponse<T> {
@@ -199,6 +201,12 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ careerId }),
     }),
+
+  // Module 5: Deterministic Skill Gap Analysis Engine
+  getSkillGapReport: (careerId?: string): Promise<SkillGapReport> =>
+    fetchJson<SkillGapReport>(`/api/skill-gap${careerId ? `/${careerId}` : ''}`),
+  getSkillGapSummary: (careerId: string): Promise<SkillGapReportSummary> =>
+    fetchJson<SkillGapReportSummary>(`/api/skill-gap/${careerId}/summary`),
 
   // Preserved for subsequent modules
   getMySkills: () => fetchJson<UserSkillRating[]>('/api/skills/my-profile'),

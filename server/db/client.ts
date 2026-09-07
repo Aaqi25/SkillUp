@@ -326,7 +326,10 @@ class DatabaseClient {
   }
 
   saveStudentSkillProfile(profile: StudentSkillProfile): void {
-    this.state.studentSkillProfiles.set(profile.userId, profile);
+    const id = profile.userId || (profile as any).studentId;
+    if (id) {
+      this.state.studentSkillProfiles.set(id, profile);
+    }
   }
 
   getStudentSkillHistory(userId: string, skillId: string): SkillHistoryEntry[] {

@@ -129,6 +129,71 @@ export interface CareerMatchItem {
   }>;
 }
 
+export type SkillGapPriority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'MET';
+export type SkillGapStatus = 'MET' | 'GAP';
+
+export interface SkillGap {
+  skillId: string;
+  skillName: string;
+  category: string;
+  currentLevel: number;
+  requiredLevel: number;
+  gap: number;
+  gapPercentage: number;
+  status: SkillGapStatus;
+  priority: SkillGapPriority;
+  careerWeight: number;
+  isUnassessed: boolean;
+  prerequisites?: string[];
+  dependencies?: string[];
+  currentScore?: number;
+  requiredScore?: number;
+  estimatedWeeksToBridge?: number;
+}
+
+export interface SkillGapReport {
+  studentId: string;
+  userId?: string;
+  careerId: string;
+  careerName: string;
+  careerTitle?: string;
+  careerCategory?: string;
+  overallGapScore: number;
+  overallReadiness: number;
+  totalRequiredSkills: number;
+  skillsMet: number;
+  skillsWithGaps: number;
+  criticalGaps: number;
+  highPriorityGaps: number;
+  mediumPriorityGaps: number;
+  lowPriorityGaps: number;
+  unassessedSkills: number;
+  generatedAt: string;
+  orderedSkillGaps: SkillGap[];
+  gaps?: SkillGap[];
+  strengths?: string[];
+  hasCompletedAssessment?: boolean;
+  aiExplanation?: string;
+}
+
+export interface SkillGapReportSummary {
+  studentId: string;
+  careerId: string;
+  careerName: string;
+  overallGapScore: number;
+  overallReadiness: number;
+  totalRequiredSkills: number;
+  skillsMet: number;
+  skillsWithGaps: number;
+  criticalGaps: number;
+  highPriorityGaps: number;
+  mediumPriorityGaps: number;
+  lowPriorityGaps: number;
+  unassessedSkills: number;
+  topSkillGaps: SkillGap[];
+  generatedAt: string;
+}
+
 export interface SkillGapItem {
   skillId: string;
   skillName: string;

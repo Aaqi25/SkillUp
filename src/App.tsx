@@ -14,6 +14,7 @@ import { StudentProfilePage } from './components/profile/StudentProfilePage.js';
 import { AssessmentFlow } from './components/assessment/AssessmentFlow.js';
 import { SkillAnalysisPage } from './components/skills/SkillAnalysisPage.js';
 import { CareerRecommendationsPage } from './components/careers/CareerRecommendationsPage.js';
+import { SkillGapPage } from './components/skill-gap/SkillGapPage.js';
 import {
   GraduationCap,
   LogOut,
@@ -25,9 +26,10 @@ import {
   FileCheck2,
   BarChart3,
   Compass,
+  Target,
 } from 'lucide-react';
 
-type ScreenState = 'landing' | 'register' | 'login' | 'onboarding' | 'profile' | 'assessment' | 'skills' | 'careers';
+type ScreenState = 'landing' | 'register' | 'login' | 'onboarding' | 'profile' | 'assessment' | 'skills' | 'careers' | 'skill-gap';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenState>('landing');
@@ -171,6 +173,20 @@ export default function App() {
                 >
                   <Compass size={14} />
                   <span>Careers</span>
+                </button>
+
+                {/* Skill Gap Analysis Button */}
+                <button
+                  id="btn-nav-skill-gap"
+                  onClick={() => setCurrentScreen('skill-gap')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    currentScreen === 'skill-gap'
+                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                      : 'text-slate-600 hover:text-amber-700 hover:bg-amber-50/50'
+                  }`}
+                >
+                  <Target size={14} />
+                  <span>Skill Gap</span>
                 </button>
 
                 {/* Skill Analysis Button */}
@@ -324,6 +340,17 @@ export default function App() {
             onNavigateToAssessment={() => setCurrentScreen('assessment')}
             onNavigateToSkills={() => setCurrentScreen('skills')}
             onNavigateToProfile={() => setCurrentScreen('profile')}
+            onNavigateToSkillGap={() => setCurrentScreen('skill-gap')}
+          />
+        )}
+
+        {currentScreen === 'skill-gap' && currentUser && (
+          <SkillGapPage
+            user={currentUser}
+            onNavigateToAssessment={() => setCurrentScreen('assessment')}
+            onNavigateToSkills={() => setCurrentScreen('skills')}
+            onNavigateToCareers={() => setCurrentScreen('careers')}
+            onNavigateToProfile={() => setCurrentScreen('profile')}
           />
         )}
       </main>
@@ -331,7 +358,7 @@ export default function App() {
       {/* Platform Footer */}
       <footer className="bg-white border-t border-slate-200 py-4 px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>SkillUp AI • Module 1, 2, 3 & 4: Auth, Assessment, Skill Analysis & Career Recommendation</span>
+          <span>SkillUp AI • Module 1–5: Auth, Assessment, Skill Analysis, Career Recommendation & Skill Gap Analysis</span>
           <span className="text-slate-400">
             Deterministic Algorithmic Scoring • In-Memory PostgreSQL Store • Verified Question Bank
           </span>
