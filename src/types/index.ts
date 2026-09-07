@@ -191,3 +191,41 @@ export interface ClientAssessmentResult {
   completedAt: string;
 }
 
+// Module 3: Skill Analysis Types
+export type ProficiencyLevel = 'Beginner' | 'Basic' | 'Intermediate' | 'Advanced' | 'Expert';
+
+export interface SkillHistoryEntry {
+  assessmentId: string;
+  score: number;
+  level: ProficiencyLevel;
+  questionsAttempted: number;
+  correctAnswers: number;
+  assessedAt: string;
+}
+
+export interface StudentSkillScore {
+  skillId: string;
+  skillName: string;
+  category: string;
+  score: number;
+  level: ProficiencyLevel;
+  questionsAttempted: number;
+  correctAnswers: number;
+  lastAssessedDate: string;
+  history?: SkillHistoryEntry[];
+}
+
+export interface StudentSkillProfile {
+  userId: string;
+  overallScore: number;
+  overallLevel: ProficiencyLevel;
+  totalQuestionsAttempted: number;
+  totalCorrectAnswers: number;
+  skills: StudentSkillScore[];
+  strongestSkills: StudentSkillScore[];
+  weakestSkills: StudentSkillScore[];
+  lastAssessedDate?: string;
+  assessmentCount: number;
+}
+
+

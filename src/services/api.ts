@@ -15,6 +15,8 @@ import {
   ProgressStatus,
   ClientAssessmentStartResponse,
   ClientAssessmentResult,
+  StudentSkillProfile,
+  SkillHistoryEntry,
 } from '../types/index.js';
 
 interface ApiResponse<T> {
@@ -168,8 +170,16 @@ export const api = {
   getAssessmentResult: (id: string): Promise<ClientAssessmentResult> =>
     fetchJson<ClientAssessmentResult>(`/api/assessment/results/${id}`),
 
+  // Module 3: Skill Analysis Engine
+  getSkills: (): Promise<SkillItem[]> => fetchJson<SkillItem[]>('/api/skills'),
+  getSkillProfile: (): Promise<StudentSkillProfile> => fetchJson<StudentSkillProfile>('/api/skills/profile'),
+  getStudentSkillProfile: (studentId: string): Promise<StudentSkillProfile> =>
+    fetchJson<StudentSkillProfile>(`/api/skills/profile/${studentId}`),
+  getSkillDetails: (skillId: string): Promise<SkillItem> => fetchJson<SkillItem>(`/api/skills/${skillId}`),
+  getSkillHistory: (skillId: string): Promise<SkillHistoryEntry[]> =>
+    fetchJson<SkillHistoryEntry[]>(`/api/skills/${skillId}/history`),
+
   // Preserved for subsequent modules
-  getSkills: () => fetchJson<SkillItem[]>('/api/skills'),
   getMySkills: () => fetchJson<UserSkillRating[]>('/api/skills/my-profile'),
   getCareers: () => fetchJson<CareerRoleItem[]>('/api/careers'),
   getCareerRecommendations: () =>

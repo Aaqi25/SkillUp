@@ -11,6 +11,7 @@ import {
   PersonalizedRoadmap,
   SkillGapItem
 } from '../common/types.js';
+import { StudentSkillProfile, SkillHistoryEntry } from '../modules/skills/types.js';
 
 export interface DatabaseState {
   users: Map<string, User>;
@@ -19,6 +20,8 @@ export interface DatabaseState {
   questions: Map<string, AssessmentQuestion>;
   attempts: Map<string, AssessmentAttempt>;
   userSkills: Map<string, Map<string, UserSkillScore>>;
+  studentSkillProfiles: Map<string, StudentSkillProfile>;
+  studentSkillHistories: Map<string, Map<string, SkillHistoryEntry[]>>;
   userCareerGoals: Map<string, string>;
   userRoadmaps: Map<string, PersonalizedRoadmap>;
   userGaps: Map<string, SkillGapItem[]>;
@@ -35,6 +38,8 @@ class DatabaseClient {
     questions: new Map(),
     attempts: new Map(),
     userSkills: new Map(),
+    studentSkillProfiles: new Map(),
+    studentSkillHistories: new Map(),
     userCareerGoals: new Map(),
     userRoadmaps: new Map(),
     userGaps: new Map(),
@@ -285,6 +290,36 @@ class DatabaseClient {
 
   getUserGaps(userId: string): SkillGapItem[] {
     return this.state.userGaps.get(userId) || [];
+  }
+
+  // Module 3: Persistent Skill Profiles & Histories
+  getStudentSkillProfile(userId: string): StudentSkillProfile | undefined {
+    return this.state.studentSkillProfiles.get(userId);
+  }
+
+  saveStudentSkillProfile(profile: StudentSkillProfile): void {
+    this.state.studentSkillProfiles.set(profile.userId, profile);
+  }
+
+  getStudentSkillHistory(userId: string, skillId: string): SkillHistoryEntry[] {
+    const userHistories = this.state.studentSkillHistories.get(userId);
+    if (!userHistories) return [];
+    return userHistories.get(skillId) || [];
+  }
+
+  getStudentAllSkillHistories(userId: string): Map<string, SkillHistoryEntry[]> {
+    return this.state.studentSkillHistories.get(userId) || new Map();
+  }
+
+  addStudentSkillHistory(userId: string, skillId: string, entry: SkillHistoryEntry): void {
+    let userHistories = this.state.studentSkillHistories.get(userId);
+    if (!userHistories) {
+      userHistories = new Map();
+      this.state.studentSkillHistories.set(userId, userHistories);
+    }
+    const skillList = userHistories.get(skillId) || [];
+    skillList.push(entry);
+    userHistories.set(skillId, skillList);
   }
 }
 

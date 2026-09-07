@@ -9,6 +9,7 @@ import { runGapTests } from './gapEngine.test.js';
 import { runHybridAssessmentTests } from './hybridAssessment.test.js';
 import { runAuthAndProfileTests } from './authModule.test.js';
 import { runAssessmentModuleTests } from './assessmentModule.test.js';
+import { runSkillAnalysisModuleTests } from './skillAnalysisModule.test.js';
 
 async function main() {
   console.log('====================================================');
@@ -18,6 +19,7 @@ async function main() {
   try {
     await runAuthAndProfileTests();
     await runAssessmentModuleTests();
+    await runSkillAnalysisModuleTests();
     runScoringTests();
     runMatchingTests();
     runGapTests();

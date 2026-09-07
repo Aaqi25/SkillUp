@@ -33,8 +33,9 @@ export type SafeUser = Omit<User, 'passwordHash'>;
 export interface Skill {
   id: string;
   name: string;
-  category: 'core_cs' | 'frontend' | 'backend' | 'devops' | 'ai_data' | 'soft_skills';
+  category: 'core_cs' | 'frontend' | 'backend' | 'devops' | 'ai_data' | 'soft_skills' | 'security' | 'systems' | 'cloud' | string;
   description: string;
+  parentSkillId?: string;
   maxScore: number;
 }
 

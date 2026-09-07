@@ -26,6 +26,7 @@ interface AssessmentFlowProps {
   user: UserProfile;
   onAssessmentCompleted?: (result: ClientAssessmentResult) => void;
   onReturnToProfile?: () => void;
+  onViewSkillAnalysis?: () => void;
 }
 
 type AssessmentStep = 'intro' | 'active' | 'submitting' | 'result';
@@ -34,6 +35,7 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({
   user,
   onAssessmentCompleted,
   onReturnToProfile,
+  onViewSkillAnalysis,
 }) => {
   const [step, setStep] = useState<AssessmentStep>('intro');
   const [attemptId, setAttemptId] = useState<string>('');
@@ -45,6 +47,8 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [history, setHistory] = useState<ClientAssessmentResult[]>([]);
   const [startTime, setStartTime] = useState<number>(Date.now());
+
+  const [isReassessment, setIsReassessment] = useState(false);
 
   // Load past assessment history on mount
   useEffect(() => {
@@ -59,11 +63,12 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({
     loadHistory();
   }, []);
 
-  const handleStart = async (isReassessment: boolean = false) => {
+  const handleStart = async (reassessmentMode: boolean = false) => {
     try {
       setIsLoading(true);
       setError(null);
-      const res = await api.startAssessment(undefined, isReassessment);
+      setIsReassessment(reassessmentMode);
+      const res = await api.startAssessment(undefined, reassessmentMode);
       setAttemptId(res.attemptId);
       setQuestions(res.questions);
       setCurrentIndex(0);
@@ -114,6 +119,7 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({
       setError(null);
       const res = await api.submitAssessment({
         assessmentId: attemptId,
+        isReassessment,
         answers: formattedAnswers,
       });
       setResult(res);
@@ -568,22 +574,35 @@ export const AssessmentFlow: React.FC<AssessmentFlowProps> = ({
             {/* Action Bar */}
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100">
               <button
-                onClick={() => handleStart(false)}
+                onClick={() => handleStart(true)}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold transition-colors"
               >
                 <RotateCcw size={14} />
                 <span>Retake Assessment</span>
               </button>
 
-              {onReturnToProfile && (
-                <button
-                  onClick={onReturnToProfile}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-colors"
-                >
-                  <span>Return to Student Profile</span>
-                  <ArrowRight size={14} />
-                </button>
-              )}
+              <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
+                {onViewSkillAnalysis && (
+                  <button
+                    id="btn-view-skill-analysis-result"
+                    onClick={onViewSkillAnalysis}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-colors"
+                  >
+                    <Sparkles size={14} />
+                    <span>View Skill Analysis</span>
+                  </button>
+                )}
+
+                {onReturnToProfile && (
+                  <button
+                    onClick={onReturnToProfile}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-colors"
+                  >
+                    <span>Return to Profile</span>
+                    <ArrowRight size={14} />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

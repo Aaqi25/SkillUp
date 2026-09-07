@@ -4,6 +4,7 @@ import { sendSuccess, sendError } from '../../common/utils/response.js';
 import { AuthenticatedRequest, authenticate } from '../../common/middleware/auth.js';
 import { QuestionSelector } from './questionSelector.js';
 import { ScoringEngine } from './scoringEngine.js';
+import { SkillAnalysisEngine } from '../skills/skillAnalysisEngine.js';
 import { AssessmentSubmissionAnswer, AssessmentAttempt } from '../../common/types.js';
 
 export const assessmentRouter = Router();
@@ -156,41 +157,35 @@ assessmentRouter.post('/submit', async (req: AuthenticatedRequest, res: Response
       }
     }
 
+    // Retrieve active attempt if exists to respect its isReassessment status
+    const attempt = assessmentId ? db.getAssessmentAttempt(assessmentId) : undefined;
+    const finalIsReassessment = typeof isReassessment === 'boolean'
+      ? isReassessment
+      : (attempt ? !!attempt.isReassessment : false);
+
     // Run deterministic scoring engine
     const finalAssessmentId = assessmentId || `asm_${Date.now()}`;
     const result = ScoringEngine.calculate({
       assessmentId: finalAssessmentId,
       userId,
-      isReassessment: !!isReassessment,
+      isReassessment: finalIsReassessment,
       questions: relevantQuestions,
       answers,
     });
 
-    // Update student's persistent skill profile based on assessed breakdown
-    for (const [skillId, stats] of Object.entries(result.skillBreakdown)) {
-      // Blend new performance with previous baseline (or set new baseline)
-      const currentSkills = db.getUserSkills(userId);
-      const existing = currentSkills.find(s => s.skillId === skillId);
-      const newScore = existing
-        ? Math.round((existing.score * 0.4 + stats.weightedScore * 0.6) * 10) / 10
-        : stats.weightedScore;
-
-      db.updateUserSkill(userId, skillId, newScore);
-    }
-
-    // Record persistent assessment record in PostgreSQL store
+    // Step 1: Record persistent assessment record in PostgreSQL store
     db.saveAssessmentResult(result);
 
-    // If there is an active assessment attempt, mark it as completed
-    if (assessmentId) {
-      const attempt = db.getAssessmentAttempt(assessmentId);
-      if (attempt) {
-        db.updateAssessmentAttempt(assessmentId, {
-          status: 'completed',
-          completedAt: result.completedAt,
-          resultId: result.assessmentId,
-        });
-      }
+    // Step 2: Skill Analysis Engine processes the result and updates persistent skill profile & history
+    SkillAnalysisEngine.processAssessmentResult(result);
+
+    // Step 3: If there is an active assessment attempt, mark it as completed
+    if (attempt) {
+      db.updateAssessmentAttempt(attempt.id, {
+        status: 'completed',
+        completedAt: result.completedAt,
+        resultId: result.assessmentId,
+      });
     }
 
     return sendSuccess(res, result, 'assessment');

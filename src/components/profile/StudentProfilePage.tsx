@@ -22,6 +22,7 @@ interface ProfileProps {
   user: UserProfile;
   onUpdateUser: (updated: UserProfile) => void;
   onStartAssessment?: () => void;
+  onNavigateToSkills?: () => void;
 }
 
 const CAREER_INTEREST_OPTIONS = [
@@ -44,7 +45,12 @@ const LEARNING_PREFERENCE_OPTIONS = [
   'System Design Blueprints',
 ];
 
-export const StudentProfilePage: React.FC<ProfileProps> = ({ user, onUpdateUser, onStartAssessment }) => {
+export const StudentProfilePage: React.FC<ProfileProps> = ({
+  user,
+  onUpdateUser,
+  onStartAssessment,
+  onNavigateToSkills,
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -429,7 +435,18 @@ export const StudentProfilePage: React.FC<ProfileProps> = ({ user, onUpdateUser,
           </p>
         </div>
 
-        <div className="shrink-0 flex items-center gap-2">
+        <div className="shrink-0 flex flex-col sm:flex-row items-center gap-2.5">
+          {onNavigateToSkills && (
+            <button
+              id="btn-profile-view-skills"
+              onClick={onNavigateToSkills}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/20 transition-colors"
+            >
+              <Sparkles size={14} />
+              <span>View Skill Analysis</span>
+            </button>
+          )}
+
           {onStartAssessment ? (
             <button
               id="btn-profile-start-assessment"

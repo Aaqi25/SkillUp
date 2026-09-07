@@ -12,6 +12,7 @@ import { LoginPage } from './components/auth/LoginPage.js';
 import { OnboardingPage } from './components/profile/OnboardingPage.js';
 import { StudentProfilePage } from './components/profile/StudentProfilePage.js';
 import { AssessmentFlow } from './components/assessment/AssessmentFlow.js';
+import { SkillAnalysisPage } from './components/skills/SkillAnalysisPage.js';
 import {
   GraduationCap,
   LogOut,
@@ -21,9 +22,10 @@ import {
   Sparkles,
   Loader2,
   FileCheck2,
+  BarChart3,
 } from 'lucide-react';
 
-type ScreenState = 'landing' | 'register' | 'login' | 'onboarding' | 'profile' | 'assessment';
+type ScreenState = 'landing' | 'register' | 'login' | 'onboarding' | 'profile' | 'assessment' | 'skills';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenState>('landing');
@@ -155,6 +157,20 @@ export default function App() {
           <div className="flex items-center gap-3">
             {currentUser ? (
               <div className="flex items-center gap-2 sm:gap-3">
+                {/* Skill Analysis Button */}
+                <button
+                  id="btn-nav-skills"
+                  onClick={() => setCurrentScreen('skills')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    currentScreen === 'skills'
+                      ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                      : 'text-slate-600 hover:text-indigo-700 hover:bg-indigo-50/50'
+                  }`}
+                >
+                  <BarChart3 size={14} />
+                  <span>Skill Analysis</span>
+                </button>
+
                 {/* Take / View Assessment Button */}
                 <button
                   id="btn-nav-assessment"
@@ -259,6 +275,7 @@ export default function App() {
             user={currentUser}
             onUpdateUser={updated => setCurrentUser(updated)}
             onStartAssessment={() => setCurrentScreen('assessment')}
+            onNavigateToSkills={() => setCurrentScreen('skills')}
           />
         )}
 
@@ -266,6 +283,7 @@ export default function App() {
           <AssessmentFlow
             user={currentUser}
             onReturnToProfile={() => setCurrentScreen('profile')}
+            onViewSkillAnalysis={() => setCurrentScreen('skills')}
             onAssessmentCompleted={() => {
               // Refresh user profile after assessment completion
               api.getCurrentUser().then(refreshed => {
@@ -274,14 +292,22 @@ export default function App() {
             }}
           />
         )}
+
+        {currentScreen === 'skills' && currentUser && (
+          <SkillAnalysisPage
+            user={currentUser}
+            onNavigateToAssessment={() => setCurrentScreen('assessment')}
+            onNavigateToProfile={() => setCurrentScreen('profile')}
+          />
+        )}
       </main>
 
       {/* Platform Footer */}
       <footer className="bg-white border-t border-slate-200 py-4 px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>SkillUp AI • Module 1 & 2: Auth, Profile & Diagnostic Assessment</span>
+          <span>SkillUp AI • Module 1, 2 & 3: Auth, Assessment & Skill Analysis</span>
           <span className="text-slate-400">
-            Deterministic Engine • In-Memory PostgreSQL Store • Verified Question Bank
+            Deterministic Algorithmic Scoring • In-Memory PostgreSQL Store • Verified Question Bank
           </span>
         </div>
       </footer>
