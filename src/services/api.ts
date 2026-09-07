@@ -17,6 +17,9 @@ import {
   ClientAssessmentResult,
   StudentSkillProfile,
   SkillHistoryEntry,
+  CareerRecommendationsResponse,
+  RankedCareerRecommendation,
+  SelectedCareerRecord,
 } from '../types/index.js';
 
 interface ApiResponse<T> {
@@ -179,16 +182,26 @@ export const api = {
   getSkillHistory: (skillId: string): Promise<SkillHistoryEntry[]> =>
     fetchJson<SkillHistoryEntry[]>(`/api/skills/${skillId}/history`),
 
-  // Preserved for subsequent modules
-  getMySkills: () => fetchJson<UserSkillRating[]>('/api/skills/my-profile'),
-  getCareers: () => fetchJson<CareerRoleItem[]>('/api/careers'),
-  getCareerRecommendations: () =>
-    fetchJson<{ recommendations: CareerMatchItem[]; selectedCareerId: string }>('/api/careers/recommendations'),
-  selectCareer: (careerId: string) =>
-    fetchJson<{ selectedCareerId: string }>('/api/careers/select', {
+  // Module 4: Career Recommendation Engine
+  getCareers: (): Promise<CareerRoleItem[]> => fetchJson<CareerRoleItem[]>('/api/careers'),
+  getCareerDetails: (careerId: string): Promise<CareerRoleItem> =>
+    fetchJson<CareerRoleItem>(`/api/careers/${careerId}`),
+  getCareerRecommendations: (): Promise<CareerRecommendationsResponse> =>
+    fetchJson<CareerRecommendationsResponse>('/api/careers/recommendations'),
+  getStudentCareerRecommendations: (studentId: string): Promise<CareerRecommendationsResponse> =>
+    fetchJson<CareerRecommendationsResponse>(`/api/careers/recommendations/${studentId}`),
+  getCareerMatch: (careerId: string): Promise<{ career: CareerRoleItem; match: RankedCareerRecommendation; hasCompletedAssessment: boolean }> =>
+    fetchJson<{ career: CareerRoleItem; match: RankedCareerRecommendation; hasCompletedAssessment: boolean }>(`/api/careers/${careerId}/match`),
+  getSelectedCareer: (): Promise<{ selectedCareer: SelectedCareerRecord | null; career: CareerRoleItem | null }> =>
+    fetchJson<{ selectedCareer: SelectedCareerRecord | null; career: CareerRoleItem | null }>('/api/careers/selected'),
+  selectCareer: (careerId: string): Promise<{ selectedCareer: SelectedCareerRecord; selectedCareerId: string; career: CareerRoleItem }> =>
+    fetchJson<{ selectedCareer: SelectedCareerRecord; selectedCareerId: string; career: CareerRoleItem }>('/api/careers/select', {
       method: 'POST',
       body: JSON.stringify({ careerId }),
     }),
+
+  // Preserved for subsequent modules
+  getMySkills: () => fetchJson<UserSkillRating[]>('/api/skills/my-profile'),
   getSkillGap: (careerId?: string) =>
     fetchJson<SkillGapAnalysis>(`/api/skill-gap${careerId ? `?careerId=${careerId}` : ''}`),
   getRoadmap: () => fetchJson<RoadmapData>('/api/roadmap'),

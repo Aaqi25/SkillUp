@@ -13,6 +13,7 @@ import { OnboardingPage } from './components/profile/OnboardingPage.js';
 import { StudentProfilePage } from './components/profile/StudentProfilePage.js';
 import { AssessmentFlow } from './components/assessment/AssessmentFlow.js';
 import { SkillAnalysisPage } from './components/skills/SkillAnalysisPage.js';
+import { CareerRecommendationsPage } from './components/careers/CareerRecommendationsPage.js';
 import {
   GraduationCap,
   LogOut,
@@ -23,9 +24,10 @@ import {
   Loader2,
   FileCheck2,
   BarChart3,
+  Compass,
 } from 'lucide-react';
 
-type ScreenState = 'landing' | 'register' | 'login' | 'onboarding' | 'profile' | 'assessment' | 'skills';
+type ScreenState = 'landing' | 'register' | 'login' | 'onboarding' | 'profile' | 'assessment' | 'skills' | 'careers';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenState>('landing');
@@ -157,6 +159,20 @@ export default function App() {
           <div className="flex items-center gap-3">
             {currentUser ? (
               <div className="flex items-center gap-2 sm:gap-3">
+                {/* Career Recommendations Button */}
+                <button
+                  id="btn-nav-careers"
+                  onClick={() => setCurrentScreen('careers')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    currentScreen === 'careers'
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                      : 'text-slate-600 hover:text-blue-700 hover:bg-blue-50/50'
+                  }`}
+                >
+                  <Compass size={14} />
+                  <span>Careers</span>
+                </button>
+
                 {/* Skill Analysis Button */}
                 <button
                   id="btn-nav-skills"
@@ -298,6 +314,16 @@ export default function App() {
             user={currentUser}
             onNavigateToAssessment={() => setCurrentScreen('assessment')}
             onNavigateToProfile={() => setCurrentScreen('profile')}
+            onNavigateToCareers={() => setCurrentScreen('careers')}
+          />
+        )}
+
+        {currentScreen === 'careers' && currentUser && (
+          <CareerRecommendationsPage
+            user={currentUser}
+            onNavigateToAssessment={() => setCurrentScreen('assessment')}
+            onNavigateToSkills={() => setCurrentScreen('skills')}
+            onNavigateToProfile={() => setCurrentScreen('profile')}
           />
         )}
       </main>
@@ -305,7 +331,7 @@ export default function App() {
       {/* Platform Footer */}
       <footer className="bg-white border-t border-slate-200 py-4 px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>SkillUp AI • Module 1, 2 & 3: Auth, Assessment & Skill Analysis</span>
+          <span>SkillUp AI • Module 1, 2, 3 & 4: Auth, Assessment, Skill Analysis & Career Recommendation</span>
           <span className="text-slate-400">
             Deterministic Algorithmic Scoring • In-Memory PostgreSQL Store • Verified Question Bank
           </span>

@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Layers,
   Sparkles,
+  Compass,
 } from 'lucide-react';
 import { api } from '../../services/api.js';
 import { UserProfile, StudentSkillProfile, StudentSkillScore, ProficiencyLevel, SkillItem } from '../../types/index.js';
@@ -22,12 +23,14 @@ interface SkillAnalysisPageProps {
   user: UserProfile;
   onNavigateToAssessment: () => void;
   onNavigateToProfile: () => void;
+  onNavigateToCareers?: () => void;
 }
 
 export const SkillAnalysisPage: React.FC<SkillAnalysisPageProps> = ({
   user,
   onNavigateToAssessment,
   onNavigateToProfile,
+  onNavigateToCareers,
 }) => {
   const [profile, setProfile] = useState<StudentSkillProfile | null>(null);
   const [allTaxonomySkills, setAllTaxonomySkills] = useState<SkillItem[]>([]);
@@ -154,6 +157,15 @@ export const SkillAnalysisPage: React.FC<SkillAnalysisPageProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
+          {onNavigateToCareers && (
+            <button
+              id="nav-to-careers-btn"
+              onClick={onNavigateToCareers}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors"
+            >
+              <Compass className="w-4 h-4 text-blue-600" /> Career Matches
+            </button>
+          )}
           <button
             id="nav-back-profile-btn"
             onClick={onNavigateToProfile}

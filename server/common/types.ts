@@ -113,8 +113,10 @@ export interface AssessmentResult {
 export interface CareerRole {
   id: string;
   title: string;
+  name?: string; // Module 4 alias
   slug: string;
   description: string;
+  category?: string; // e.g. 'Software Engineering', 'Data & Analytics', 'Artificial Intelligence'
   averageSalary?: string;
   marketDemand: 'high' | 'very_high' | 'moderate';
   requiredSkills: Array<{
@@ -122,14 +124,40 @@ export interface CareerRole {
     skillName: string;
     weight: number; // 0.0 - 1.0 (Must sum to 1.0 per career)
     targetLevel: number; // 0 - 100 benchmark proficiency
+    minimumRecommendedLevel?: number; // Module 4 alias
   }>;
+}
+
+export type CareerMatchCategory =
+  | 'Excellent Match'
+  | 'Strong Match'
+  | 'Moderate Match'
+  | 'Low Match'
+  | 'Poor Match';
+
+export interface CareerMatchSkillSummary {
+  skillId: string;
+  skillName: string;
+  score: number;
+  weight: number;
+  targetLevel?: number;
+  isMissing?: boolean;
 }
 
 export interface CareerMatchResult {
   careerId: string;
   careerTitle: string;
-  matchPercentage: number; // Calculated via weighted matching formula
+  careerName?: string;
+  category?: string;
+  description?: string;
+  matchScore?: number; // 0-100 deterministic
+  matchPercentage: number; // Calculated via weighted matching formula (alias for backwards compatibility)
+  matchCategory?: CareerMatchCategory;
   fitLevel: 'strong_match' | 'moderate_match' | 'growth_opportunity';
+  matchedSkillCount?: number;
+  requiredSkillCount?: number;
+  strongestMatchingSkills?: CareerMatchSkillSummary[];
+  weakestMatchingSkills?: CareerMatchSkillSummary[];
   skillContributions: Array<{
     skillId: string;
     skillName: string;
@@ -137,6 +165,8 @@ export interface CareerMatchResult {
     targetScore: number;
     weight: number;
     contribution: number;
+    isAssessed?: boolean;
+    isMissing?: boolean;
   }>;
 }
 

@@ -12,6 +12,7 @@ import {
   SkillGapItem
 } from '../common/types.js';
 import { StudentSkillProfile, SkillHistoryEntry } from '../modules/skills/types.js';
+import { SelectedCareerRecord } from '../modules/careers/types.js';
 
 export interface DatabaseState {
   users: Map<string, User>;
@@ -22,6 +23,7 @@ export interface DatabaseState {
   userSkills: Map<string, Map<string, UserSkillScore>>;
   studentSkillProfiles: Map<string, StudentSkillProfile>;
   studentSkillHistories: Map<string, Map<string, SkillHistoryEntry[]>>;
+  selectedCareers: Map<string, SelectedCareerRecord>;
   userCareerGoals: Map<string, string>;
   userRoadmaps: Map<string, PersonalizedRoadmap>;
   userGaps: Map<string, SkillGapItem[]>;
@@ -40,6 +42,7 @@ class DatabaseClient {
     userSkills: new Map(),
     studentSkillProfiles: new Map(),
     studentSkillHistories: new Map(),
+    selectedCareers: new Map(),
     userCareerGoals: new Map(),
     userRoadmaps: new Map(),
     userGaps: new Map(),
@@ -274,6 +277,31 @@ class DatabaseClient {
 
   getUserCareerGoal(userId: string): string | undefined {
     return this.state.userCareerGoals.get(userId);
+  }
+
+  setSelectedCareer(studentId: string, careerId: string): SelectedCareerRecord {
+    const record: SelectedCareerRecord = {
+      studentId,
+      careerId,
+      selectedAt: new Date().toISOString(),
+    };
+    this.state.selectedCareers.set(studentId, record);
+    this.state.userCareerGoals.set(studentId, careerId);
+    return record;
+  }
+
+  getSelectedCareer(studentId: string): SelectedCareerRecord | undefined {
+    const record = this.state.selectedCareers.get(studentId);
+    if (record) return record;
+    const legacyGoal = this.state.userCareerGoals.get(studentId);
+    if (legacyGoal) {
+      return {
+        studentId,
+        careerId: legacyGoal,
+        selectedAt: new Date().toISOString(),
+      };
+    }
+    return undefined;
   }
 
   saveRoadmap(roadmap: PersonalizedRoadmap): void {

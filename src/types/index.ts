@@ -33,10 +33,19 @@ export interface UserSkillRating {
   lastAssessedAt: string;
 }
 
+export type CareerMatchCategory =
+  | 'Excellent Match'
+  | 'Strong Match'
+  | 'Moderate Match'
+  | 'Low Match'
+  | 'Poor Match';
+
 export interface CareerRoleItem {
   id: string;
   title: string;
+  name?: string;
   slug: string;
+  category?: string;
   description: string;
   marketDemand: 'high' | 'very_high' | 'moderate';
   averageSalary?: string;
@@ -45,7 +54,64 @@ export interface CareerRoleItem {
     skillName: string;
     weight: number;
     targetLevel: number;
+    minimumRecommendedLevel?: number;
   }>;
+}
+
+export interface SkillMatchSummary {
+  skillId: string;
+  skillName: string;
+  score: number;
+  weight: number;
+  targetLevel?: number;
+  isMissing?: boolean;
+}
+
+export interface SkillMatchContribution {
+  skillId: string;
+  skillName: string;
+  userScore: number;
+  targetScore: number;
+  weight: number;
+  contribution: number;
+  isAssessed?: boolean;
+  isMissing?: boolean;
+}
+
+export interface RankedCareerRecommendation {
+  careerId: string;
+  careerTitle: string;
+  careerName: string;
+  slug: string;
+  category: string;
+  description: string;
+  averageSalary?: string;
+  marketDemand: 'high' | 'very_high' | 'moderate';
+  matchScore: number;
+  matchPercentage: number;
+  matchCategory: CareerMatchCategory;
+  fitLevel: 'strong_match' | 'moderate_match' | 'growth_opportunity';
+  matchedSkillCount: number;
+  requiredSkillCount: number;
+  strongestMatchingSkills: SkillMatchSummary[];
+  weakestMatchingSkills: SkillMatchSummary[];
+  skillContributions: SkillMatchContribution[];
+}
+
+export interface SelectedCareerRecord {
+  studentId: string;
+  careerId: string;
+  selectedAt: string;
+}
+
+export interface CareerRecommendationsResponse {
+  hasCompletedAssessment: boolean;
+  message?: string;
+  overallSkillScore?: number;
+  topCareer: RankedCareerRecommendation | null;
+  recommendations: RankedCareerRecommendation[];
+  selectedCareerId?: string | null;
+  selectedCareer?: SelectedCareerRecord | null;
 }
 
 export interface CareerMatchItem {
